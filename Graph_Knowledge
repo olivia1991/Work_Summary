@@ -1,0 +1,5 @@
+
+axes=FALSE 是禁止坐标轴的生成用
+xaxt="n", yaxt="n" 不显示刻度
+sub = '' subtitle
+curve(pbeta(x,1,3),col="green", xlab = 'Engergy', ylab = 'Percentage', sub = '2017', main = 'beta', yaxt = 'n')
