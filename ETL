@@ -1,0 +1,29 @@
+###### NA Count ########
+num.NA = sort(colSums(sapply(train, is.na))) #summary count of NA for each factor
+remain.col = names(num.NA)[which(num.NA<= 0.2*dim(train)[1])]
+ 
+
+
+#####Date########
+
+
+#must add as.data  Catergorical data -> Date
+with(train,plot(as.Date(train$transactiondate), logerror))
+
+train$txnmonth = sapply(strsplit(train$transactiondate, '-'), function(x) x[2])
+table(train$txnmonth)
+
+
+##Last two digits
+Table_copy$date_of_birth = as.character(date_of_birth)
+Table_copy$age = substr(Table_copy$date_of_birth, nchar(Table_copy$date_of_birth)-1,nchar(Table_copy$date_of_birth))
+Table_copy$age = as.numeric(Table_copy$age)
+
+
+##Born data ---> age#####
+for (i in 1:nrow(Table_copy)){
+  if (Table_copy$age[i] < 18){Table_copy$age[i] = 17 - Table_copy$age[i]}
+  else if (Table_copy$age[i] >= 18){Table_copy$age[i] = 117 - Table_copy$age[i]}
+  else 
+    Table_copy$age = 9999
+}
