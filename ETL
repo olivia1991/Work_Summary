@@ -19,6 +19,9 @@ Table_copy$date_of_birth = as.character(date_of_birth)
 Table_copy$age = substr(Table_copy$date_of_birth, nchar(Table_copy$date_of_birth)-1,nchar(Table_copy$date_of_birth))
 Table_copy$age = as.numeric(Table_copy$age)
 
+######WeekDay#######
+unlist(strsplit(unlist(strsplit(allfiles[2], "\\_"))[5], "\\."))[1]
+
 
 ##Born data ---> age#####
 for (i in 1:nrow(Table_copy)){
