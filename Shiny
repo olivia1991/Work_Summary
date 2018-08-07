@@ -1,0 +1,114 @@
+
+
+library(shiny)
+
+
+##########UI  ---- Define UI for the shiny#########
+
+UI = fluidPage(
+  
+  titlePanel("Hardware Reference"), 
+    
+  column(8,
+         tabsetPanel(type = "tabs",
+                     tabPanel("Plot", plotOutput("plot")),
+                     tabPanel("Summary", verbatimTextOutput("summary"))
+    
+         )
+  ),
+  br(),
+  
+  ##### Bar #####
+  column(4, wellPanel(sliderInput("prate","% of Huawei Meta10 Users", min = 0, max =1, value = 0.9))),
+  
+  column(4, wellPanel(h4("Audio"),h5("Meta 10 audio"),
+                      checkboxInput("audioaddon","New", FALSE),
+                      uiOutput("conditionalInput2", inline = TRUE))
+         ) 
+  
+)
+
+
+########################     server   #############################
+server = function(input, output){
+  
+  mm = read.csv("C:\\Users\\X80053513\\Desktop\\Audio\\Audio_Usage_Mapping.csv")
+  
+  output$conditionalInput2 = renderUI({
+      output = tagList()
+      if(input$audioaddon == TRUE){
+        output = fluidRow(column(4,
+                                 selectInput("audiomodel", "audio_type:", c("htc"),
+                                             selected = "htc", selectize = FALSE)))
+      }
+      output
+     
+  })
+  
+  E = reactive({
+    
+    e_audio = mm$x  ###audio usge type
+    
+    E1 = e_audio   ###whole device energy
+    
+    if(any(c(input$audioaddon))){
+      
+      if(input$audioaddon == TRUE){e1_audio = 0.8* mm$x}
+      else{e1_audio = 0.8 * mm$x}
+      
+      E2 = e1_audio
+      E = list(E1 = E1, E2 = E2)
+    }else{
+        E = list(E1 = E1, e_audio )
+    }
+    
+    E
+  })
+  
+  output$plot = renderPlot({
+    E = E()
+    
+    if(any(c(input$audioaddon))){
+      p = input$prate     ##prate --> what number you choose in your "BAR"
+      plot(ecdf(E$E1), ylab = "%", xlab = "Whole device Usage -- NEW", main = " ", xlim = c(0.3, quantile(E$E1, 0.95)))
+      lines(ecdf(E$E2), col = "red", main = "New Audio")
+      abline(h = p, lty = 3)
+      abline(v = quantile(E$E2, p), lty = 3)
+      abline(v = quantile(E$E1, p), lty = 3)
+      if(quantile(E$E2,p)>=quantile(E$E1,p)){
+        text(quantile(E$E2,p),0.3,labels = "Increase",cex = 1.5,adj=c(0,1))
+        
+        ##point position:  x = quantitle(E$E2,P); y = 0.3 ; 
+        
+      }else{text(quantile(E$E1,p),0.3,labels = "Decrease",cex=1.5,adj=c(0,1))
+      }
+      
+    }else{
+      p = input$prate
+      plot(ecdf(E$E1), ylab = "%", xlab = "Whole device Usage", main = "",xlim=c(0.3,quantile(E$E1,0.95)))
+      abline(h = p, lty =3)
+      abline(v = quantile(E$E1,p), lty = 3)
+      
+    }
+  })
+  
+  output$summary = renderPrint({
+    E = E()
+    
+    if(any(c(input$audioaddon))){
+      E1 = E1
+      E2 = E2
+      list(case1 = summary(E1),
+           case2 = summary(E2)
+           )
+    }else{
+      list(summary(E1))
+    }
+    
+    
+  })
+  
+}  
+  
+# Run the application 
+shinyApp(ui = UI, server = server)
