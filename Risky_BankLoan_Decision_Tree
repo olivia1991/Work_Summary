@@ -1,0 +1,106 @@
+
+
+install.packages("C50")
+install.packages('gmodels')
+
+library('C50')
+library('gmodels')
+
+credit = read.csv("C:\\Users\\X80053513\\Desktop\\Paige\\credit.csv")
+str(credit)
+
+plot(credit$savings_balance)
+table(credit$checking_balance)
+table(credit$savings_balance)
+
+
+## Loan features  -- numeric
+
+summary(credit$months_loan_duration)
+summary(credit$amount)
+
+# Our predictor - whether the individual defaulted on a loan
+table(credit$default)
+
+set.seed(12345)
+# Since values are not stored in random order, we have to randomly select.
+# runif() selects from a uniform distribution, and order() orders it.
+credit_rand = credit[order(runif(1000)),]
+
+##what is the order() function?
+##order(c(0.5,0.25,0.75,0.1))
+##[1] 4 2 1 3
+
+## Check to make sure you have the dame data frame, just sorted differently
+summary(credit$amount)
+summary(credit_rand$amount)
+
+
+#Check the first few values in each data frame.
+head(credit$amount)
+head(credit_rand$amount)
+
+
+# 90% for training, 10% for testing.
+credit_train = credit_rand[1:900, ]
+credit_test = credit_rand[901:1000, ]
+
+# Check to make sure you have ~30% of defaulted loans in each of the data sets
+prop.table(table(credit_train$default))
+prop.table(table(credit_test$default))
+
+
+
+###STEP3  Train a Model on the Data
+
+# 17th column is the default class variable
+
+credit_train$default = as.factor(credit_train$default)
+credit_model = C5.0(credit_train[-17],credit_train$default)
+
+# Learn more about the tree
+credit_model
+summary(credit_model)
+
+# Step 4: Evaluate Model Performance
+# Apply decision tree to test data set.
+credit_pred = predict(credit_model, credit_test)
+
+
+# Compare predicted class values to actuals
+# prop.c = column percentages; prop.r = row percentages
+CrossTable(credit_test$default, credit_pred, 
+           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+           dnn = c('actual default','predicted default'))
+
+
+#Step 5: Improve Model Performance  ##BOOSTING
+# ADAPTIVE BOOSTING = process in which many decision trees are built, and trees vote on the
+# best class for each sample. Combine a number of weak performers, and you have a team that 
+# is stronger than any one of the learners alone.
+
+
+credit_boost10 = C5.0(credit_train[-17], credit_train$default, 
+                      trials = 10)
+credit_boost10
+summary(credit_boost10)
+
+credit_boost_pred10 = predict(credit_boost10, credit_test)
+CrossTable(credit_test$default, credit_boost_pred10,
+           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+           dnn = c('actual default', 'predicted default'))
+
+
+#Apply a penalty to different types of errors, because some mistakes are more costly than others.
+error_cost = matrix(c(0,1,4,0), nrow = 2)
+error_cost
+credit_cost <- C5.0(credit_train[-17], credit_train$default,
+                    costs = error_cost)
+
+## See if teh confusion matrix changes, based on the weighting
+credit_cost_pred <- predict(credit_cost, credit_test)
+
+CrossTable(credit_test$default, credit_cost_pred,
+           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+           dnn = c('actual default', 'predicted default'))
+
